@@ -59,11 +59,11 @@ def save_sms_config(cfg):
 
 
 def get_data():
-    """Load in-memory-like data from session or temp file for simplicity."""
-    if "members_df" in session and session.get("members_raw"):
+    """Load data from Flask session."""
+    raw = session.get("members_raw")
+    if raw:
         try:
-            df = pd.read_json(session["members_raw"], orient="split")
-            return df
+            return pd.read_json(raw, orient="split")
         except Exception:
             pass
     return None

@@ -113,7 +113,7 @@
 {% block scripts %}
 <script>
 function openAllWA() {
-  const links = {{ wa_links|tojson if wa_links else '[]' }};
+  const links = {{ (wa_links or [])|tojson }};
   links.slice(0, 5).forEach((l, i) => {
     setTimeout(() => window.open(l.url, '_blank'), i * 400);
   });
