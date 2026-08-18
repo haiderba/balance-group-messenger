@@ -132,33 +132,48 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     if "file" not in request.files:
-        flash("No file selected", "danger")
+        flash("No file selected. Please choose a CSV or Excel file.", "danger")
         return redirect(url_for("index"))
     file = request.files["file"]
-    if file.filename == "":
-        flash("No file selected", "danger")
+    if not file or file.filename == "":
+        flash("No file selected. Please choose a CSV or Excel file.", "danger")
         return redirect(url_for("index"))
 
     try:
         filename = secure_filename(file.filename)
-        if filename.lower().endswith(".csv"):
-            df = pd.read_csv(file)
-        elif filename.lower().endswith((".xlsx", ".xls")):
+        lower = filename.lower()
+
+        if lower.endswith(".csv"):
+            # Try multiple encodings (common issue with Excel/exported CSVs)
+            content = file.read()
+            df = None
+            for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
+                try:
+                    df = pd.read_csv(io.BytesIO(content), encoding=enc)
+                    break
+                except Exception:
+                    continue
+            if df is None:
+                flash("Could not read CSV. Please save it as UTF-8 CSV and try again.", "danger")
+                return redirect(url_for("index"))
+        elif lower.endswith((".xlsx", ".xls")):
             df = pd.read_excel(file)
         else:
-            flash("Only CSV or Excel files are supported", "danger")
+            flash("Only .csv, .xlsx or .xls files are supported.", "danger")
             return redirect(url_for("index"))
 
+        # Clean column names
         df.columns = [str(c).strip() for c in df.columns]
         if df.empty:
-            flash("File is empty", "danger")
+            flash("The file is empty or has no data rows.", "danger")
             return redirect(url_for("index"))
 
         set_data(df)
         session.pop("phone_col", None)
         session.pop("balance_col", None)
         session.pop("groups", None)
-        flash(f"Successfully loaded {len(df)} rows with columns: {', '.join(df.columns)}", "success")
+        session.pop("group_suggestions", None)
+        flash(f"Successfully loaded {len(df)} rows • Columns: {', '.join(df.columns)}", "success")
         return redirect(url_for("configure"))
     except Exception as e:
         flash(f"Error reading file: {str(e)}", "danger")
