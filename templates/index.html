@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Home · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-5 text-center">
+        <h1 class="display-6 fw-bold text-primary mb-3">
+          <i class="bi bi-diagram-3"></i> Balance Group Messenger
+        </h1>
+        <p class="lead text-muted mb-4">
+          Upload a CSV of members with closing balances & mobile numbers.<br>
+          Split them into custom balance groups, craft personalized messages,<br>
+          and send via <strong>your own SMS API</strong> or <strong>WhatsApp Web</strong>.
+        </p>
+
+        {% if has_data %}
+        <div class="alert alert-success d-inline-block">
+          <i class="bi bi-check-circle"></i> Data loaded ({{ columns|length }} columns).
+          <a href="{{ url_for('configure') }}" class="alert-link">Continue setup →</a>
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="mt-4">
+          <div class="mb-3">
+            <label for="file" class="form-label fw-semibold">Upload Members CSV / Excel</label>
+            <input type="file" class="form-control form-control-lg" id="file" name="file" accept=".csv,.xlsx,.xls" required>
+            <div class="form-text">Must contain at least a mobile/phone column and preferably a balance column. Any extra columns can be used as message placeholders.</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg px-5">
+            <i class="bi bi-upload"></i> Upload & Start
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row mt-4 g-3">
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center">
+            <i class="bi bi-collection fs-1 text-primary"></i>
+            <h5 class="mt-2">Smart Groups</h5>
+            <p class="small text-muted">Define min/max balance ranges. System suggests terciles automatically. Export any group as CSV.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center">
+            <i class="bi bi-chat-square-text fs-1 text-success"></i>
+            <h5 class="mt-2">Personalized Messages</h5>
+            <p class="small text-muted">Use <code>{{column}}</code> placeholders. Works with any custom columns in your sheet.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center">
+            <i class="bi bi-send-check fs-1 text-info"></i>
+            <h5 class="mt-2">Your SMS API + WhatsApp</h5>
+            <p class="small text-muted">Plug any HTTP SMS gateway. One-click WhatsApp Web links with pre-filled text.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
