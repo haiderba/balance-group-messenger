@@ -1,0 +1,47 @@
+:root {
+  --primary: #0d6efd;
+}
+
+body {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+.navbar-brand {
+  letter-spacing: -0.3px;
+}
+
+.card {
+  border-radius: 0.75rem;
+}
+
+.table th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+code {
+  background: #e9ecef;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.sticky-top {
+  z-index: 10;
+}
+
+#preview {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.list-group-item:hover {
+  background-color: #e8f5e9;
+}
