@@ -1,1 +1,118 @@
-PLACEHOLDER
+{% extends "base.html" %}
+{% block title %}SMS Settings · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-gear"></i> SMS API Configuration</h2>
+<p class="text-muted">
+  Choose a simple provider + API key, or use the advanced custom HTTP settings.
+</p>
+
+<form method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+
+    <div class="form-check form-switch mb-4">
+      <input class="form-check-input" type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
+      <label class="form-check-label fw-semibold" for="enabled">Enable SMS sending</label>
+    </div>
+
+    <h5 class="mb-3"><i class="bi bi-lightning-charge"></i> Simple Mode (API Key only)</h5>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-5">
+        <label class="form-label fw-semibold">Service Provider</label>
+        <select name="provider" id="provider" class="form-select" onchange="toggleAdvanced()">
+          <option value="generic" {% if cfg.provider == 'generic' %}selected{% endif %}>Generic (Bearer / API Key)</option>
+          <option value="twilio" {% if cfg.provider == 'twilio' %}selected{% endif %}>Twilio</option>
+          <option value="custom" {% if cfg.provider == 'custom' %}selected{% endif %}>Custom / Advanced</option>
+        </select>
+      </div>
+      <div class="col-md-7">
+        <label class="form-label fw-semibold">API Key / Token</label>
+        <input type="password" name="api_key" class="form-control" value="{{ cfg.api_key or '' }}" placeholder="Paste your API key or token here">
+        <div class="form-text">Stored only on your local machine. Never sent anywhere else.</div>
+      </div>
+    </div>
+
+    <div id="simple-fields" class="row g-3 mb-4" style="display: none;">
+      <div class="col-md-6" id="twilio-sid-field" style="display:none;">
+        <label class="form-label">Twilio Account SID</label>
+        <input type="text" name="account_sid" class="form-control" value="{{ cfg.account_sid or '' }}" placeholder="ACxxxxxxxx">
+      </div>
+      <div class="col-md-6" id="from-number-field">
+        <label class="form-label">From Number / Sender ID (optional)</label>
+        <input type="text" name="from_number" class="form-control" value="{{ cfg.from_number or '' }}" placeholder="+1234567890 or BRAND">
+      </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div id="advanced-section">
+      <h5 class="mb-3"><i class="bi bi-sliders"></i> Advanced / Custom HTTP</h5>
+      <p class="small text-muted">Only needed when you select <strong>Custom / Advanced</strong> or want full control.</p>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">API URL</label>
+        <input type="url" name="api_url" class="form-control" value="{{ cfg.api_url }}" placeholder="https://api.example.com/sms/send">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">HTTP Method</label>
+        <select name="method" class="form-select">
+          <option value="POST" {% if cfg.method == 'POST' %}selected{% endif %}>POST</option>
+          <option value="GET" {% if cfg.method == 'GET' %}selected{% endif %}>GET</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Headers (JSON)</label>
+        <textarea name="headers" class="form-control font-monospace" rows="3">{{ cfg.headers | tojson(indent=2) }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Body Template</label>
+        <textarea name="body_template" class="form-control font-monospace" rows="3">{{ cfg.body_template }}</textarea>
+        <div class="form-text">Use <code>{{phone}}</code> and <code>{{message}}</code></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Success HTTP Status Codes</label>
+        <input type="text" name="success_codes" class="form-control" value="{{ cfg.success_codes | join(',') }}">
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-save"></i> Save Configuration</button>
+  </div>
+</form>
+
+<div class="card mt-4 border-0 bg-light">
+  <div class="card-body">
+    <h6>How Simple Mode works</h6>
+    <ul class="small mb-0">
+      <li><strong>Generic</strong> → Sends JSON with header <code>Authorization: Bearer YOUR_KEY</code></li>
+      <li><strong>Twilio</strong> → Uses Account SID + Auth Token with proper Twilio endpoint</li>
+      <li><strong>Custom</strong> → You control URL, headers and body completely</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAdvanced() {
+  const provider = document.getElementById('provider').value;
+  const advanced = document.getElementById('advanced-section');
+  const simpleFields = document.getElementById('simple-fields');
+  const twilioSid = document.getElementById('twilio-sid-field');
+
+  if (provider === 'custom') {
+    advanced.style.display = 'block';
+    simpleFields.style.display = 'none';
+  } else {
+    advanced.style.display = 'none';
+    simpleFields.style.display = 'flex';
+    twilioSid.style.display = (provider === 'twilio') ? 'block' : 'none';
+  }
+}
+document.addEventListener('DOMContentLoaded', toggleAdvanced);
+</script>
+{% endblock %}
