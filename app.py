@@ -10,6 +10,7 @@ import json
 import re
 import csv
 import io
+import uuid
 from datetime import datetime
 from urllib.parse import quote
 from functools import wraps
@@ -29,7 +30,6 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "sms_config.json")
-DATA_FILE = os.path.join(os.path.dirname(__file__), "session_data.json")
 
 
 def load_sms_config():
@@ -55,19 +55,30 @@ def save_sms_config(cfg):
         json.dump(cfg, f, indent=2)
 
 
+def _data_path():
+    """Return a unique file path for the current browser session."""
+    sid = session.get("_sid")
+    if not sid:
+        sid = str(uuid.uuid4())
+        session["_sid"] = sid
+    return os.path.join(app.config["UPLOAD_FOLDER"], f"data_{sid}.pkl")
+
+
 def get_data():
-    """Load data from Flask session."""
-    raw = session.get("members_raw")
-    if raw:
+    """Load members DataFrame from disk (avoids cookie size limit)."""
+    path = _data_path()
+    if os.path.exists(path):
         try:
-            return pd.read_json(raw, orient="split")
+            return pd.read_pickle(path)
         except Exception:
             pass
     return None
 
 
 def set_data(df: pd.DataFrame):
-    session["members_raw"] = df.to_json(orient="split")
+    """Save members DataFrame to disk. Only small metadata stays in the cookie."""
+    path = _data_path()
+    df.to_pickle(path)
     session["columns"] = list(df.columns)
     session.modified = True
 
@@ -144,7 +155,6 @@ def upload():
         lower = filename.lower()
 
         if lower.endswith(".csv"):
-            # Try multiple encodings (common issue with Excel/exported CSVs)
             content = file.read()
             df = None
             for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
@@ -162,7 +172,6 @@ def upload():
             flash("Only .csv, .xlsx or .xls files are supported.", "danger")
             return redirect(url_for("index"))
 
-        # Clean column names
         df.columns = [str(c).strip() for c in df.columns]
         if df.empty:
             flash("The file is empty or has no data rows.", "danger")
@@ -368,7 +377,7 @@ def messages():
         columns=columns,
         groups=groups_def,
         sample_row=sample_row,
-        last_template=session.get("last_template", "Hello {{Name}}, your closing balance is {{ClosingBalance}}. Please contact us."),
+        last_template=session.get("last_template", "Hello {{Name}}, your closing balance is {{Closing Balance (Rs)}}. Please contact us."),
     )
 
 
@@ -523,6 +532,12 @@ def export_group(group_name):
 
 @app.route("/clear")
 def clear_data():
+    try:
+        path = _data_path()
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
     for k in list(session.keys()):
         session.pop(k, None)
     flash("Session data cleared", "info")
