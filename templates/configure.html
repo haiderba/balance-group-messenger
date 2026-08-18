@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Map Columns · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-sliders"></i> Map Columns</h2>
+<p class="text-muted">We detected {{ total_rows }} members. Tell us which columns contain the phone number and the closing balance.</p>
+
+<form method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Phone / Mobile Column <span class="text-danger">*</span></label>
+        <select name="phone_col" class="form-select" required>
+          <option value="">-- select --</option>
+          {% for c in columns %}
+          <option value="{{ c }}" {% if c in phone_candidates %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Closing Balance Column (optional but recommended)</label>
+        <select name="balance_col" class="form-select">
+          <option value="">-- none / skip grouping --</option>
+          {% for c in columns %}
+          <option value="{{ c }}" {% if c in balance_candidates %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h6>Preview (first 5 rows)</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+          <thead class="table-light">
+            <tr>
+              {% for c in columns %}<th>{{ c }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in sample %}
+            <tr>
+              {% for c in columns %}<td>{{ row[c] }}</td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Save Mapping & Continue</button>
+      <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

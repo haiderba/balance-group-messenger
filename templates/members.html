@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Members · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2><i class="bi bi-person-lines-fill"></i> Members ({{ members|length }})</h2>
+  <div>
+    <a href="{{ url_for('messages') }}" class="btn btn-primary"><i class="bi bi-chat-dots"></i> Create Messages</a>
+  </div>
+</div>
+
+{% if counts %}
+<div class="row g-2 mb-4">
+  {% for gname, cnt in counts.items() %}
+  <div class="col-auto">
+    <div class="card border-0 shadow-sm px-3 py-2 d-flex flex-row align-items-center gap-2">
+      <span class="badge bg-primary rounded-pill">{{ cnt }}</span>
+      <strong>{{ gname }}</strong>
+      {% if gname != 'Ungrouped' %}
+      <a href="{{ url_for('export_group', group_name=gname) }}" class="btn btn-sm btn-outline-secondary" title="Export CSV"><i class="bi bi-download"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive" style="max-height: 65vh;">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th>#</th>
+            <th>Group</th>
+            <th>Phone</th>
+            {% if balance_col %}<th>Balance</th>{% endif %}
+            {% for c in columns if c != phone_col and c != balance_col %}
+            <th>{{ c }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in members %}
+          <tr>
+            <td>{{ m._idx + 1 }}</td>
+            <td><span class="badge bg-{% if m._group == 'Ungrouped' %}secondary{% else %}primary{% endif %}">{{ m._group }}</span></td>
+            <td><code>{{ m._phone or '—' }}</code></td>
+            {% if balance_col %}<td>{{ m._balance if m._balance is not none else '—' }}</td>{% endif %}
+            {% for c in columns if c != phone_col and c != balance_col %}
+            <td>{{ m[c] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

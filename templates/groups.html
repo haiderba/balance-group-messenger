@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Define Groups · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-collection"></i> Define Balance Groups</h2>
+
+{% if balance_col %}
+<p class="text-muted">
+  Balance column: <strong>{{ balance_col }}</strong>
+  {% if data_min is not none %}
+  (data range: {{ "%.2f"|format(data_min) }} → {{ "%.2f"|format(data_max) }})
+  {% endif %}
+</p>
+
+{% if suggestions %}
+<div class="alert alert-info">
+  <strong>Suggested 3 groups (by quantiles):</strong>
+  <ul class="mb-0 mt-1">
+    {% for s in suggestions %}
+    <li>{{ s.name }}: {{ "%.0f"|format(s.min) }} – {{ "%.0f"|format(s.max) }} (≈{{ s.count }} members)</li>
+    {% endfor %}
+  </ul>
+  <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="applySuggestions()">Apply these suggestions</button>
+</div>
+{% endif %}
+
+<form method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <p class="small text-muted">You can create up to 5 groups. The last group's max can be the absolute maximum of your data. Leave unused rows blank.</p>
+    
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Group Name</th>
+            <th>Min Balance</th>
+            <th>Max Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in range(1, 6) %}
+          <tr>
+            <td>{{ i }}</td>
+            <td><input type="text" name="name_{{ i }}" class="form-control" placeholder="e.g. Low / Medium / High"
+              value="{% if existing and existing|length >= i %}{{ existing[i-1].name }}{% elif suggestions and suggestions|length >= i %}{{ suggestions[i-1].name }}{% endif %}"></td>
+            <td><input type="number" step="any" name="min_{{ i }}" class="form-control"
+              value="{% if existing and existing|length >= i %}{{ existing[i-1].min }}{% elif suggestions and suggestions|length >= i %}{{ suggestions[i-1].min }}{% endif %}"></td>
+            <td><input type="number" step="any" name="max_{{ i }}" class="form-control"
+              value="{% if existing and existing|length >= i %}{{ existing[i-1].max }}{% elif suggestions and suggestions|length >= i %}{{ suggestions[i-1].max }}{% endif %}"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> Save Groups</button>
+      <a href="{{ url_for('configure') }}" class="btn btn-outline-secondary">Back</a>
+    </div>
+  </div>
+</form>
+{% else %}
+<div class="alert alert-warning">
+  No balance column mapped. You can still send messages to all members.
+  <a href="{{ url_for('messages') }}" class="alert-link">Go to Messages →</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applySuggestions() {
+  // already pre-filled; just a visual helper
+  alert("Suggestions are already filled in the form. Adjust if needed and click Save Groups.");
+}
+</script>
+{% endblock %}
