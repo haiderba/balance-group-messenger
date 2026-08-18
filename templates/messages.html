@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Messages · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-chat-dots"></i> Create Messages</h2>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post" class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Target</label>
+          <select name="target" class="form-select">
+            <option value="all">All members</option>
+            {% for g in groups %}
+            <option value="{{ g.name }}">Group: {{ g.name }} ({{ g.min }} – {{ g.max }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Message Template</label>
+          <textarea name="template" id="template" class="form-control" rows="6" required>{{ last_template }}</textarea>
+          <div class="form-text">
+            Use placeholders like <code>{{Name}}</code>, <code>{{Balance}}</code>, or any column name from your CSV.
+            Available columns:
+            {% for c in columns %}
+              <span class="badge bg-light text-dark border">{{ c }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Live Preview (first member)</label>
+          <div id="preview" class="border rounded p-3 bg-light small" style="min-height: 60px;"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-right-circle"></i> Prepare Messages</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 bg-light">
+      <div class="card-body">
+        <h6>Tips</h6>
+        <ul class="small mb-0">
+          <li>Placeholders are case-sensitive to your column names.</li>
+          <li>You can create different templates for different groups by changing the Target.</li>
+          <li>After preparing, you will be able to send via SMS API or open WhatsApp links.</li>
+          <li>For custom one-off messages, upload a new CSV that already contains a message column and map it later.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const templateEl = document.getElementById('template');
+const previewEl = document.getElementById('preview');
+
+async function updatePreview() {
+  const res = await fetch('/api/preview_message', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({template: templateEl.value})
+  });
+  const data = await res.json();
+  previewEl.textContent = data.preview || '(empty)';
+}
+
+templateEl.addEventListener('input', updatePreview);
+updatePreview();
+</script>
+{% endblock %}

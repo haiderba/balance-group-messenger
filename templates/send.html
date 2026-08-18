@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Send · Balance Group Messenger{% endblock %}
+
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-send"></i> Send Messages</h2>
+
+{% if not recipients %}
+<div class="alert alert-warning">
+  No messages prepared yet. <a href="{{ url_for('messages') }}">Create a message template first</a>.
+</div>
+{% else %}
+
+<div class="alert alert-info">
+  <strong>{{ recipients|length }}</strong> messages ready.
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5><i class="bi bi-phone"></i> SMS via your API</h5>
+        <p class="small text-muted">Uses the configuration from Settings. Make sure your SMS gateway is working.</p>
+        {% if sms_enabled %}
+        <form method="post">
+          <input type="hidden" name="action" value="sms">
+          <button type="submit" class="btn btn-success" onclick="return confirm('Send SMS to {{ recipients|length }} numbers?')">
+            <i class="bi bi-send-fill"></i> Send All via SMS API
+          </button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('settings') }}" class="btn btn-outline-primary">Configure SMS API first</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5><i class="bi bi-whatsapp text-success"></i> WhatsApp Web</h5>
+        <p class="small text-muted">
+          Generates <code>wa.me</code> links with pre-filled text. Open them one by one (or use a multi-open helper).
+          True “is on WhatsApp” check requires WhatsApp Business API or unofficial libraries – here we provide direct chat links.
+        </p>
+        <form method="post">
+          <input type="hidden" name="action" value="whatsapp_links">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-whatsapp"></i> Generate WhatsApp Links
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if results %}
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-header">SMS Results</div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Phone</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for r in results %}
+        <tr class="{{ 'table-success' if r.ok else 'table-danger' }}">
+          <td>{{ r.phone }}</td>
+          <td>{{ r.status }}</td>
+          <td class="small">{{ r.detail }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if wa_links %}
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-header d-flex justify-content-between">
+    <span>WhatsApp Links ({{ wa_links|length }})</span>
+    <button class="btn btn-sm btn-outline-success" onclick="openAllWA()">Open first 5 in new tabs</button>
+  </div>
+  <div class="card-body p-0">
+    <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+      {% for l in wa_links %}
+      <a href="{{ l.url }}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <span>{{ l.name or l.phone }} <small class="text-muted">{{ l.phone }}</small></span>
+        <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm border-0">
+  <div class="card-header">Message Preview (first 10)</div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Phone</th><th>Message</th></tr></thead>
+      <tbody>
+        {% for r in recipients[:10] %}
+        <tr>
+          <td><code>{{ r.phone }}</code></td>
+          <td class="small">{{ r.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAllWA() {
+  const links = {{ wa_links|tojson if wa_links else '[]' }};
+  links.slice(0, 5).forEach((l, i) => {
+    setTimeout(() => window.open(l.url, '_blank'), i * 400);
+  });
+}
+</script>
+{% endblock %}
